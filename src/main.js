@@ -40,7 +40,10 @@ function createWindow() {
             contextIsolation: true,
             sandbox: false // Required for some node functionality if not careful, but we use preload
         },
-        backgroundColor: '#121212',
+        transparent: true,
+        backgroundColor: '#00000000',
+        frame: true,
+        autoHideMenuBar: true,
         show: false
     });
 
