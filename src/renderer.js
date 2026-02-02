@@ -1,0 +1,84 @@
+const urlInput = document.getElementById('urlInput');
+const addBtn = document.getElementById('addBtn');
+const startBtn = document.getElementById('startBtn');
+const folderBtn = document.getElementById('folderBtn');
+const queueList = document.getElementById('queueList');
+const logArea = document.getElementById('logArea');
+const progressBar = document.getElementById('progressBar');
+const progressCount = document.getElementById('progressCount');
+const progressPercent = document.getElementById('progressPercent');
+const statusText = document.getElementById('statusText');
+
+// Helpers
+function log(msg) {
+    const div = document.createElement('div');
+    div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    logArea.appendChild(div);
+    logArea.scrollTop = logArea.scrollHeight;
+}
+
+// Event Listeners
+addBtn.addEventListener('click', async () => {
+    const url = urlInput.value.trim();
+    if (!url) return;
+
+    if (await window.api.addToQueue(url)) {
+        urlInput.value = '';
+    } else {
+        alert('Invalid URL or error adding to queue');
+    }
+});
+
+startBtn.addEventListener('click', async () => {
+    startBtn.disabled = true;
+    addBtn.disabled = true;
+    try {
+        await window.api.startQueue();
+    } catch (e) {
+        console.error(e);
+        startBtn.disabled = false;
+        addBtn.disabled = false;
+    }
+});
+
+folderBtn.addEventListener('click', () => {
+    window.api.openDownloads();
+});
+
+// IPC Listeners
+window.api.onLog(msg => log(msg));
+
+window.api.onQueueUpdate(queue => {
+    queueList.innerHTML = '';
+    queue.forEach((url, index) => {
+        const li = document.createElement('li');
+        li.textContent = `${index + 1}. ${url}`;
+        queueList.appendChild(li);
+    });
+});
+
+window.api.onStatusChange(status => {
+    statusText.textContent = status;
+});
+
+window.api.onProgress(({ completed, total }) => {
+    const percent = Math.round((completed / total) * 100);
+    progressBar.style.width = `${percent}%`;
+    progressCount.textContent = `${completed}/${total}`;
+    progressPercent.textContent = `${percent}%`;
+});
+
+window.api.onFinished((msg) => {
+    log(msg);
+    statusText.textContent = "Done";
+    startBtn.disabled = false;
+    addBtn.disabled = false;
+    progressBar.style.width = '0%';
+});
+
+window.api.onError((err) => {
+    log(`ERROR: ${err}`);
+    alert(`Error: ${err}`);
+    startBtn.disabled = false;
+    addBtn.disabled = false;
+});

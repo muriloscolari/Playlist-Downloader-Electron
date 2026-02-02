@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Playlist Downloader</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>YouTube Downloader</h1>
+            <p>High Quality MP3 Playlist Downloader</p>
+        </header>
+        
+        <div class="card input-section">
+            <div class="input-group">
+                <input type="text" id="urlInput" placeholder="Paste YouTube Playlist or Video URL here...">
+                <button id="addBtn" class="primary-btn">Add to Queue</button>
+            </div>
+            <div class="actions">
+                <button id="startBtn" class="success-btn">Start Downloads</button>
+                <button id="folderBtn" class="secondary-btn">Open Folder</button>
+            </div>
+        </div>
+
+        <div class="grid-layout">
+            <div class="card queue-section">
+                <h2>Queue</h2>
+                <ul id="queueList"></ul>
+            </div>
+
+            <div class="card progress-section">
+                <h2>Progress</h2>
+                <div class="status-text" id="statusText">Ready</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="progress-stats">
+                    <span id="progressCount">0/0</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card log-section">
+            <h2>Logs</h2>
+            <div id="logArea" class="log-area"></div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
