@@ -27,7 +27,7 @@ addBtn.addEventListener('click', async () => {
     if (await window.api.addToQueue(url)) {
         urlInput.value = '';
     } else {
-        alert('Invalid URL or error adding to queue');
+        alert('URL inválida ou erro ao adicionar à fila');
     }
 });
 
@@ -94,15 +94,15 @@ window.api.onProgress(({ completed, total }) => {
 
 window.api.onFinished((msg) => {
     log(msg);
-    statusText.textContent = "Done";
+    statusText.textContent = "Concluído";
     startBtn.disabled = false;
     addBtn.disabled = false;
     progressBar.style.width = '0%';
 });
 
 window.api.onError((err) => {
-    log(`ERROR: ${err}`);
-    alert(`Error: ${err}`);
+    log(`ERRO: ${err}`);
+    alert(`Erro: ${err}`);
     startBtn.disabled = false;
     addBtn.disabled = false;
 });

@@ -16,33 +16,33 @@
     <div class="container">
         <header>
             <h1>YouTube Downloader</h1>
-            <p>High Quality MP3 Playlist Downloader</p>
+            <p>Baixador de Playlists em MP3 de Alta Qualidade</p>
         </header>
 
         <div class="card input-section">
             <div class="input-group">
-                <input type="text" id="urlInput" placeholder="Paste YouTube Playlist or Video URL here...">
-                <button id="addBtn" class="primary-btn">Add to Queue</button>
+                <input type="text" id="urlInput" placeholder="Cole a URL da Playlist ou Vídeo do YouTube aqui...">
+                <button id="addBtn" class="primary-btn">Adicionar à Fila</button>
             </div>
             <div class="actions">
-                <button id="chooseFolderBtn" class="secondary-btn">📁 Choose Download Folder</button>
-                <button id="startBtn" class="success-btn">Start Downloads</button>
-                <button id="folderBtn" class="secondary-btn">Open Folder</button>
+                <button id="chooseFolderBtn" class="secondary-btn">📁 Escolher Pasta de Download</button>
+                <button id="startBtn" class="success-btn">Iniciar Downloads</button>
+                <button id="folderBtn" class="secondary-btn">Abrir Pasta</button>
             </div>
             <div class="folder-display" id="folderDisplay">
-                <small>Download Folder: <strong id="currentFolder">downloads</strong></small>
+                <small>Pasta de Download: <strong id="currentFolder">downloads</strong></small>
             </div>
         </div>
 
         <div class="grid-layout">
             <div class="card queue-section">
-                <h2>Queue</h2>
+                <h2>Fila</h2>
                 <ul id="queueList"></ul>
             </div>
 
             <div class="card progress-section">
-                <h2>Progress</h2>
-                <div class="status-text" id="statusText">Ready</div>
+                <h2>Progresso</h2>
+                <div class="status-text" id="statusText">Pronto</div>
                 <div class="progress-bar-container">
                     <div class="progress-bar" id="progressBar"></div>
                 </div>

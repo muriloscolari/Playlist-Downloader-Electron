@@ -101,13 +101,13 @@ class QueueManager {
         if (!fs.existsSync(this.baseDownloadDir)) {
             fs.mkdirSync(this.baseDownloadDir, { recursive: true });
         }
-        this.log(`Download folder changed to: ${folderPath}`);
+        this.log(`Pasta de download alterada para: ${folderPath}`);
     }
 
     async start() {
         if (this.isDownloading) return;
         this.isDownloading = true;
-        this.log("Starting queue processing...");
+        this.log("Iniciando processamento da fila...");
 
         try {
             while (this.queue.length > 0) {
@@ -116,20 +116,20 @@ class QueueManager {
 
                 await this.processPlaylist(url);
             }
-            this.log("All queues completed.");
-            this.mainWindow.webContents.send('download-finished', "All downloads completed!");
+            this.log("Todas as filas concluídas.");
+            this.mainWindow.webContents.send('download-finished', "Todos os downloads concluídos!");
         } catch (error) {
-            this.log(`Critical Error: ${error.message}`);
+            this.log(`Erro Crítico: ${error.message}`);
             this.mainWindow.webContents.send('download-error', error.message);
         } finally {
             this.isDownloading = false;
-            this.mainWindow.webContents.send('status-change', "Ready");
+            this.mainWindow.webContents.send('status-change', "Pronto");
         }
     }
 
     async processPlaylist(url) {
-        this.log(`Fetching playlist info: ${url}`);
-        this.mainWindow.webContents.send('status-change', "Fetching info...");
+        this.log(`Buscando informações da playlist: ${url}`);
+        this.mainWindow.webContents.send('status-change', "Buscando informações...");
 
         try {
             const info = await ytDlpJson(url, {
@@ -137,10 +137,10 @@ class QueueManager {
                 noWarnings: true
             });
 
-            const playlistTitle = info.title || "Unknown Playlist";
+            const playlistTitle = info.title || "Playlist Desconhecida";
             const entries = info.entries || [info]; // Handle single video
 
-            this.log(`Found ${entries.length} items in '${playlistTitle}'`);
+            this.log(`Encontrados ${entries.length} itens em '${playlistTitle}'`);
 
             // Create Folder
             const safeTitle = playlistTitle.replace(/[^a-zA-Z0-9 \.\_\-]/g, "").trim();
@@ -151,7 +151,7 @@ class QueueManager {
             let completed = 0;
             const total = entries.length;
 
-            this.mainWindow.webContents.send('status-change', `Downloading ${total} items...`);
+            this.mainWindow.webContents.send('status-change', `Baixando ${total} itens...`);
 
             // Map entries to promises with concurrency limit
             const tasks = entries.map((entry, index) => {
@@ -164,12 +164,12 @@ class QueueManager {
             await Promise.all(tasks);
 
         } catch (err) {
-            this.log(`Error processing playlist: ${err.message}`);
+            this.log(`Erro ao processar playlist: ${err.message}`);
         }
     }
 
     async downloadItemWithRetry(entry, dir, index, total) {
-        const title = entry.title || "Unknown";
+        const title = entry.title || "Desconhecido";
         const url = entry.url || `https://www.youtube.com/watch?v=${entry.id}`;
 
         // Retry strategies (mimicking the Python logic)
@@ -182,19 +182,19 @@ class QueueManager {
         for (let i = 0; i < maxRetries; i++) {
             if (success) break;
             try {
-                if (i > 0) this.log(`[Retry ${i}] ${title}`);
-                else this.log(`Processing: ${title}`);
+                if (i > 0) this.log(`[Tentativa ${i}] ${title}`);
+                else this.log(`Processando: ${title}`);
 
                 await this.downloadSingle(url, dir, entry.id);
                 success = true;
             } catch (e) {
-                this.log(`Failed attempt ${i + 1} for ${title}: ${e.message.split('\n')[0]}`);
+                this.log(`Falha na tentativa ${i + 1} para ${title}: ${e.message.split('\n')[0]}`);
                 await new Promise(r => setTimeout(r, 1000));
             }
         }
 
         if (!success) {
-            this.log(`PERMANENT FAILURE: ${title}`);
+            this.log(`FALHA PERMANENTE: ${title}`);
         }
     }
 
@@ -254,7 +254,7 @@ class QueueManager {
         const mp3Path = path.join(dir, `${videoId}_temp.mp3`);
 
         if (!fs.existsSync(mp3Path)) {
-            throw new Error("Downloaded file not found");
+            throw new Error("Arquivo baixado não encontrado");
         }
 
         // Find Thumbnail
@@ -268,7 +268,7 @@ class QueueManager {
             try {
                 thumbBuffer = await this.processThumbnail(fullThumbPath);
             } catch (e) {
-                this.log(`Thumbnail error: ${e.message}`);
+                this.log(`Erro de thumbnail: ${e.message}`);
             }
         }
 
@@ -293,8 +293,8 @@ class QueueManager {
         // Let's use the playlist entry title for now, but clean it.
 
         // Refetch info for high accuracy metadata
-        let videoTitle = "Unknown";
-        let videoArtist = "Unknown";
+        let videoTitle = "Desconhecido";
+        let videoArtist = "Desconhecido";
 
         try {
             const videoInfo = await ytDlpJson(url, { noWarnings: true });
@@ -305,7 +305,7 @@ class QueueManager {
         }
 
         // Rename
-        const safeFilename = videoTitle.replace(/[^a-zA-Z0-9 \.\_\-]/g, "").trim();
+        const safeFilename = videoTitle.replace(/[^a-zA-Z0-9 \.\\_\\-]/g, "").trim();
         let finalPath = path.join(dir, `${safeFilename}.mp3`);
 
         // Collision check
