@@ -5,7 +5,8 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --linux --x64"
+    "build": "electron-builder --linux --x64",
+    "build:windows": "electron-builder --windows --x64"
   },
   "keywords": [
     "youtube",
@@ -26,6 +27,12 @@
         "AppImage"
       ],
       "category": "AudioVideo"
+    },
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "artifactName": "${productName}-${version}-portable.exe"
     },
     "files": [
       "src/**/*",

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,21 +11,26 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <div class="container">
         <header>
             <h1>YouTube Downloader</h1>
             <p>High Quality MP3 Playlist Downloader</p>
         </header>
-        
+
         <div class="card input-section">
             <div class="input-group">
                 <input type="text" id="urlInput" placeholder="Paste YouTube Playlist or Video URL here...">
                 <button id="addBtn" class="primary-btn">Add to Queue</button>
             </div>
             <div class="actions">
+                <button id="chooseFolderBtn" class="secondary-btn">📁 Choose Download Folder</button>
                 <button id="startBtn" class="success-btn">Start Downloads</button>
                 <button id="folderBtn" class="secondary-btn">Open Folder</button>
+            </div>
+            <div class="folder-display" id="folderDisplay">
+                <small>Download Folder: <strong id="currentFolder">downloads</strong></small>
             </div>
         </div>
 
@@ -55,4 +61,5 @@
 
     <script src="renderer.js"></script>
 </body>
+
 </html>

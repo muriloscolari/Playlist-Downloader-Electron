@@ -96,6 +96,14 @@ class QueueManager {
         return true;
     }
 
+    setDownloadFolder(folderPath) {
+        this.baseDownloadDir = folderPath;
+        if (!fs.existsSync(this.baseDownloadDir)) {
+            fs.mkdirSync(this.baseDownloadDir, { recursive: true });
+        }
+        this.log(`Download folder changed to: ${folderPath}`);
+    }
+
     async start() {
         if (this.isDownloading) return;
         this.isDownloading = true;
@@ -259,7 +267,6 @@ class QueueManager {
             const fullThumbPath = path.join(dir, thumbPath);
             try {
                 thumbBuffer = await this.processThumbnail(fullThumbPath);
-                fs.unlinkSync(fullThumbPath); // Delete original thumb
             } catch (e) {
                 this.log(`Thumbnail error: ${e.message}`);
             }

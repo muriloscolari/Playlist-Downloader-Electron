@@ -48,11 +48,29 @@ app.whenReady().then(() => {
     });
 
     ipcMain.handle('open-downloads-folder', () => {
-        const downloadPath = path.join(process.cwd(), 'downloads');
-        if (!fs.existsSync(downloadPath)) {
-            fs.mkdirSync(downloadPath);
+        const customPath = queueManager.baseDownloadDir;
+        if (!fs.existsSync(customPath)) {
+            fs.mkdirSync(customPath, { recursive: true });
         }
-        shell.openPath(downloadPath);
+        shell.openPath(customPath);
+    });
+
+    ipcMain.handle('choose-folder', async () => {
+        const result = await dialog.showOpenDialog(mainWindow, {
+            properties: ['openDirectory']
+        });
+
+        if (!result.canceled && result.filePaths.length > 0) {
+            const folderPath = result.filePaths[0];
+            queueManager.setDownloadFolder(folderPath);
+            return { success: true, path: folderPath };
+        }
+
+        return { success: false };
+    });
+
+    ipcMain.handle('get-download-folder', () => {
+        return queueManager.baseDownloadDir;
     });
 
     app.on('activate', function () {

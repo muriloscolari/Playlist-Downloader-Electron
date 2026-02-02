@@ -4,6 +4,8 @@ contextBridge.exposeInMainWorld('api', {
     addToQueue: (url) => ipcRenderer.invoke('add-to-queue', url),
     startQueue: () => ipcRenderer.invoke('start-queue'),
     openDownloads: () => ipcRenderer.invoke('open-downloads-folder'),
+    chooseFolder: () => ipcRenderer.invoke('choose-folder'),
+    getDownloadFolder: () => ipcRenderer.invoke('get-download-folder'),
 
     // Events
     onLog: (callback) => ipcRenderer.on('log-message', (event, msg) => callback(msg)),
