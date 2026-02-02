@@ -6,7 +6,7 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --linux --x64",
-    "build:windows": "electron-builder --windows --x64"
+    "build:windows": "USE_SYSTEM_FPM=true electron-builder --windows --x64"
   },
   "keywords": [
     "youtube",
@@ -32,7 +32,8 @@
       "target": [
         "portable"
       ],
-      "artifactName": "${productName}-${version}-portable.exe"
+      "artifactName": "${productName}-${version}-portable.exe",
+      "signAndEditExecutable": false
     },
     "files": [
       "src/**/*",
