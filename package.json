@@ -1,19 +1,48 @@
 {
   "name": "yt-dlp-node",
   "version": "1.0.0",
-  "description": "",
+  "description": "YouTube Playlist Downloader - Electron App",
   "main": "src/main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder --linux --x64"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "youtube",
+    "downloader",
+    "mp3",
+    "electron"
+  ],
+  "author": {
+    "name": "Murilo",
+    "email": "murilovazscolari6@gmail.com"
+  },
+  "license": "MIT",
+  "build": {
+    "appId": "com.ytdownloader.app",
+    "productName": "YouTube Downloader",
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "AudioVideo"
+    },
+    "files": [
+      "src/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "extraResources": []
+  },
   "dependencies": {
     "fluent-ffmpeg": "^2.1.3",
+    "jimp": "^1.6.0",
     "node-id3": "^0.2.9",
     "p-limit": "^7.2.0",
-    "sharp": "^0.34.5",
     "yt-dlp-exec": "^1.0.2"
+  },
+  "devDependencies": {
+    "electron": "^40.1.0",
+    "electron-builder": "^26.7.0"
   }
 }

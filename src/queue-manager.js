@@ -1,8 +1,54 @@
-const ytDlp = require('yt-dlp-exec');
+const { execSync, spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const nodeID3 = require('node-id3');
-const sharp = require('sharp');
+const { Jimp } = require('jimp');
+
+// Helper to run yt-dlp using system binary
+function runYtDlp(args) {
+    return new Promise((resolve, reject) => {
+        const child = spawn('yt-dlp', args);
+        let stdout = '';
+        let stderr = '';
+
+        child.stdout.on('data', (data) => { stdout += data.toString(); });
+        child.stderr.on('data', (data) => { stderr += data.toString(); });
+
+        child.on('close', (code) => {
+            if (code === 0) {
+                resolve(stdout);
+            } else {
+                reject(new Error(stderr || `yt-dlp exited with code ${code}`));
+            }
+        });
+
+        child.on('error', reject);
+    });
+}
+
+async function ytDlpJson(url, options = {}) {
+    const args = [url, '--dump-single-json'];
+    if (options.flatPlaylist) args.push('--flat-playlist');
+    if (options.noWarnings) args.push('--no-warnings');
+
+    const output = await runYtDlp(args);
+    return JSON.parse(output);
+}
+
+async function ytDlpDownload(url, options = {}) {
+    const args = [url];
+    if (options.output) args.push('-o', options.output);
+    if (options.format) args.push('-f', options.format);
+    if (options.extractAudio) args.push('-x');
+    if (options.audioFormat) args.push('--audio-format', options.audioFormat);
+    if (options.audioQuality) args.push('--audio-quality', options.audioQuality);
+    if (options.writeThumbnail) args.push('--write-thumbnail');
+    if (options.noWarnings) args.push('--no-warnings');
+    if (options.cookies) args.push('--cookies', options.cookies);
+    if (options.client) args.push('--extractor-args', `youtube:player_client=${options.client}`);
+
+    await runYtDlp(args);
+}
 
 // Simple concurrency limiter (replacement for p-limit which is ESM-only)
 function createLimiter(concurrency) {
@@ -78,8 +124,7 @@ class QueueManager {
         this.mainWindow.webContents.send('status-change', "Fetching info...");
 
         try {
-            const info = await ytDlp(url, {
-                dumpSingleJson: true,
+            const info = await ytDlpJson(url, {
                 flatPlaylist: true,
                 noWarnings: true
             });
@@ -147,21 +192,55 @@ class QueueManager {
 
     async downloadSingle(url, dir, videoId) {
         // Prepare filename template
-        // We use a temp name first
         const outputTemplate = path.join(dir, `${videoId}_temp.%(ext)s`);
 
-        await ytDlp(url, {
-            format: 'bestaudio/best',
-            output: outputTemplate,
-            extractAudio: true,
-            audioFormat: 'mp3',
-            audioQuality: '320K', // yt-dlp uses K suffix often
-            // writethumbnail: true, // We will handle thumbnail manually if possible or let yt-dlp do it? 
-            // Python script moved thumbnail separately. Let's let yt-dlp write it and we process it.
-            writeThumbnail: true,
-            noWarnings: true,
-            // addMetadata: true, // We do manual metadata
-        });
+        // Check for cookies file in multiple locations
+        const possiblePaths = [
+            path.join(process.cwd(), 'cookies.txt'),
+            path.join(path.dirname(process.execPath), 'cookies.txt'),
+            path.join(this.baseDownloadDir, '..', 'cookies.txt')
+        ];
+
+        let useCookies = null;
+        for (const p of possiblePaths) {
+            if (fs.existsSync(p)) {
+                useCookies = p;
+                break;
+            }
+        }
+
+        // Simplified strategies for speed (try most likely to work first)
+        const strategies = [
+            { client: 'android', format: 'bestaudio/best' },
+            { client: 'web', format: 'bestaudio/best' }
+        ];
+
+        let success = false;
+        let lastError = null;
+
+        for (let i = 0; i < strategies.length && !success; i++) {
+            const strategy = strategies[i];
+            try {
+                await ytDlpDownload(url, {
+                    format: strategy.format,
+                    output: outputTemplate,
+                    extractAudio: true,
+                    audioFormat: 'mp3',
+                    audioQuality: '320K',
+                    writeThumbnail: true,
+                    noWarnings: true,
+                    cookies: useCookies,
+                    client: strategy.client
+                });
+                success = true;
+            } catch (e) {
+                lastError = e;
+            }
+        }
+
+        if (!success) {
+            throw lastError || new Error('All download strategies failed');
+        }
 
         // Now find the file
         const mp3Path = path.join(dir, `${videoId}_temp.mp3`);
@@ -211,7 +290,7 @@ class QueueManager {
         let videoArtist = "Unknown";
 
         try {
-            const videoInfo = await ytDlp(url, { dumpSingleJson: true, noWarnings: true });
+            const videoInfo = await ytDlpJson(url, { noWarnings: true });
             videoTitle = videoInfo.title;
             videoArtist = videoInfo.uploader;
         } catch (e) {
@@ -245,16 +324,39 @@ class QueueManager {
     }
 
     async processThumbnail(imagePath) {
-        // Crop to 720x720 center
-        const image = sharp(imagePath);
-        const metadata = await image.metadata();
+        const { execSync } = require('child_process');
 
-        // Default smart crop or center? Instructions said "center crop".
-        // Sharp resize with fit: 'cover' does center crop by default.
-        return await image
-            .resize(720, 720, { fit: 'cover', position: 'center' })
-            .toFormat('jpeg')
-            .toBuffer();
+        // Convert to JPEG if needed (handles webp and other formats)
+        const jpegPath = imagePath.replace(/\.(webp|png)$/i, '.jpg');
+
+        if (imagePath !== jpegPath) {
+            // Use FFmpeg to convert to JPEG
+            execSync(`ffmpeg -i "${imagePath}" "${jpegPath}" -y`, { stdio: 'ignore' });
+            // Delete original if it still exists
+            if (fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+            }
+        }
+
+        // Crop to 720x720 center using Jimp
+        const image = await Jimp.read(jpegPath);
+        const width = image.width;
+        const height = image.height;
+
+        // Center crop to square
+        const size = Math.min(width, height);
+        const x = Math.floor((width - size) / 2);
+        const y = Math.floor((height - size) / 2);
+
+        image.crop({ x, y, w: size, h: size });
+        image.resize({ w: 720, h: 720 });
+
+        const buffer = await image.getBuffer('image/jpeg');
+
+        // Cleanup
+        if (fs.existsSync(jpegPath)) fs.unlinkSync(jpegPath);
+
+        return buffer;
     }
 }
 
