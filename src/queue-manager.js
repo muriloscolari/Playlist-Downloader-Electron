@@ -73,15 +73,15 @@ function createLimiter(concurrency) {
 }
 
 class QueueManager {
-    constructor(mainWindow) {
+    constructor(mainWindow, savedFolder) {
         this.mainWindow = mainWindow;
         this.queue = [];
         this.isDownloading = false;
-        this.baseDownloadDir = path.join(process.cwd(), 'downloads');
+        this.baseDownloadDir = savedFolder || path.join(process.cwd(), 'downloads');
         this.maxConcurrency = 4;
 
         // Ensure download dir exists
-        if (!fs.existsSync(this.baseDownloadDir)) fs.mkdirSync(this.baseDownloadDir);
+        if (!fs.existsSync(this.baseDownloadDir)) fs.mkdirSync(this.baseDownloadDir, { recursive: true });
     }
 
     log(message) {

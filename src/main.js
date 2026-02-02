@@ -8,6 +8,28 @@ const QueueManager = require('./queue-manager');
 let mainWindow;
 let queueManager;
 
+// Config file helpers
+const configPath = path.join(app.getPath('userData'), 'config.json');
+
+function loadConfig() {
+    try {
+        if (fs.existsSync(configPath)) {
+            return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        }
+    } catch (e) {
+        console.error('Error loading config:', e);
+    }
+    return {};
+}
+
+function saveConfig(config) {
+    try {
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    } catch (e) {
+        console.error('Error saving config:', e);
+    }
+}
+
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1000,
@@ -34,8 +56,11 @@ function createWindow() {
 app.whenReady().then(() => {
     createWindow();
 
-    // Initialize Queue Manager
-    queueManager = new QueueManager(mainWindow);
+    // Load saved config
+    const config = loadConfig();
+
+    // Initialize Queue Manager with saved folder (if exists)
+    queueManager = new QueueManager(mainWindow, config.downloadFolder);
 
     // --- IPC Handlers (must be after queueManager is initialized) ---
     ipcMain.handle('add-to-queue', async (event, url) => {
@@ -63,6 +88,12 @@ app.whenReady().then(() => {
         if (!result.canceled && result.filePaths.length > 0) {
             const folderPath = result.filePaths[0];
             queueManager.setDownloadFolder(folderPath);
+
+            // Save to config
+            const config = loadConfig();
+            config.downloadFolder = folderPath;
+            saveConfig(config);
+
             return { success: true, path: folderPath };
         }
 
